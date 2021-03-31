@@ -1,36 +1,38 @@
 import { useEffect } from 'react'
-import { connect } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 
 import { fetchTodos } from '../../todos'
 import { fetchUsers } from '../../users'
 
-const Combined = props => {
-    const { getTodos, getUsers, combinedData } = props
+const Combined = () => {
+    const combinedData = useSelector(state => {
+        const users = [...state.users.users]
+        const todos = [...state.todos.todos]
+        return todosByUsers(users, todos)
+    })
+    const dispatch = useDispatch();
+    const getTodos = () => dispatch(fetchTodos());
+    const getUsers = () => dispatch(fetchUsers());
     useEffect(()=>{
         getTodos();
         getUsers();
-    },[getTodos, getUsers])
+    },[])  //combinedData passed as dependency causes infinite loop of rendering
     return (
         <div>
-            <h2>Users</h2>
-            {
-                false
-                ? <p>Loading users...</p>
-                : <ul>
-                    {
-                        combinedData.map(user => <li key={user.id}>
-                              {user.name}, id: {user.id}
+            <ul>
+                {
+                    combinedData.map(user => <li key={user.id}>
+                        {user.name}, id: {user.id}
                               <ul>
                                   {
-                                      user.todos.map(todo => <li key={todo.id}>
-                                            {todo.id}. {todo.title} (userId: {todo.userId})
-                                          </li>)
+                                    user.todos.map(todo => <li key={todo.id}>
+                                        {todo.id}. {todo.title} (userId: {todo.userId})
+                                    </li>)
                                   }
                               </ul>
-                            </li>)
+                        </li>)
                     }
                 </ul>
-            }
         </div>
     )
 }
@@ -47,19 +49,4 @@ const todosByUsers = (users, todos) => {
     return users
 }
 
-const mapStateToProps = state => {
-    const users = [...state.users.users]
-    const todos = [...state.todos.todos]
-    return {
-        combinedData: todosByUsers(users, todos)
-    }
-}
-
-const mapDispatchToProps = dispatch => {
-    return {
-        getTodos: () => dispatch(fetchTodos()),
-        getUsers: () => dispatch(fetchUsers())
-    }
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(Combined);
+export default Combined;
